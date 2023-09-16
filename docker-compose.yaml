@@ -1,0 +1,80 @@
+version: '1'
+
+services:
+  # Pi-hole Service
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    hostname: ${HOSTNAME}
+
+    # Uncomment the following section if you want to use Pi-Hole for DHCP
+    # cap_add:
+    #   - NET_ADMIN
+    
+    # Port mappings for Pi-hole
+    ports:
+      - 53/tcp      # DNS (TCP)
+      - 53/udp      # DNS (UDP)
+      # - 67/udp    # DHCP (UDP) - Uncomment if you want to use Pi-Hole for DHCP
+      - 80/tcp      # Web Interface
+    
+    environment:
+      - FTLCONF_LOCAL_IPV4=${PIHOLE_MACVLAN_IP}    # Local IPv4 for Pi-hole's FTL (Faster Than Light) engine
+      - WEBPASSWORD=${WEBPASSWORD}                 # Password for accessing Pi-hole's web interface
+      - PIHOLE_DNS_=${UNBOUND_MACVLAN_IP}          # IP address for Unbound DNS resolver
+      - TZ=${TIMEZONE}                             # Timezone for the container
+      - DNSMASQ_USER=root                          # Run dnsmasq as root
+      - DNSMASQ_LISTENING=local                    # Dnsmasq will listen for local requests only
+    
+    # Volume mappings to persist Pi-hole's configurations and data
+    volumes:
+      - ${PIHOLE_CONFIG_PATH}:/etc/pihole:rw        # Pi-hole's configuration and data
+      - ${DNSMASQ_CONFIG_PATH}:/etc/dnsmasq.d/:rw   # Dnsmasq's configuration
+
+    # Network configurations
+    networks:
+      macvlan:
+        ipv4_address: ${PIHOLE_MACVLAN_IP}
+      bridge:
+        ipv4_address: ${PIHOLE_BRIDGE_IP}
+    
+    # Always restart the container if it stops
+    restart: always
+
+  # Unbound DNS Resolver Service
+  unbound:
+    container_name: unbound
+    image: mvance/unbound:latest
+
+    # Port mappings for Unbound
+    ports:
+      - 53/tcp  # DNS (TCP)
+      - 53/udp  # DNS (UDP)
+    
+    # Network configurations
+    networks:
+      macvlan:
+        ipv4_address: ${UNBOUND_MACVLAN_IP}
+    
+    # Always restart the container if it stops
+    restart: always
+
+# Network definitions
+networks:
+  macvlan:
+    driver: macvlan
+    driver_opts:
+      parent: ${NETWORK_INTERFACE} # Parent network interface for the macvlan network
+    ipam:
+      config:
+        - subnet: ${MACVLAN_SUBNET}
+          gateway: ${MACVLAN_GATEWAY}
+          ip_range: ${MACVLAN_IP_RANGE}
+
+  bridge:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${BRIDGE_SUBNET}
+          gateway: ${BRIDGE_GATEWAY}
+          ip_range: ${BRIDGE_IP_RANGE}

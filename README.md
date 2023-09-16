@@ -109,4 +109,4 @@ You can also designate the Pi-Hole custom bridge network IP on your Synology NAS
 Inspired by the setup from [digtalaloha](https://github.com/digtalaloha/synology-docker-pihole-unbound).
 ### Further reading:
 [Pi-Hole with Unbound on Docker](https://github.com/chriscrowe/docker-pihole-unbound/)
-[Pi-Hole Docker Official] (https://github.com/pi-hole/docker-pi-hole#quick-start)
+[Pi-Hole Docker Official](https://github.com/pi-hole/docker-pi-hole#quick-start)
